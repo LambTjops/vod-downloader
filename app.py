@@ -3,6 +3,7 @@ import requests
 import threading
 import time
 from flask import Flask, render_template, request
+import re  # <--- Add this
 
 app = Flask(__name__)
 
@@ -15,6 +16,12 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 
 # GLOBAL STATE
 DOWNLOAD_STATE = {"is_downloading": False, "filename": "", "progress_mb": 0, "total_mb": 0, "percent": 0, "status": "Idle"}
+
+def sanitize_filename(name):
+    """Removes illegal characters from filenames"""
+    # Replace bad chars with a dash or nothing
+    clean = re.sub(r'[<>:"/\\|?*]', '', name)
+    return clean.strip()
 
 def get_xtream_data(action, params=None):
     """Generic wrapper for Xtream API calls"""
@@ -99,29 +106,38 @@ def streams():
 
 @app.route('/episodes/<series_id>')
 def episodes(series_id):
-    # Fetch details for one specific TV Show
     data = get_xtream_data("get_series_info", {"series_id": series_id})
     
-    # Xtream returns dict with 'episodes' key containing a dict of seasons
-    # We need to flatten this into a simple list for the template
-    flat_episodes = []
+    # Get Series Name for renaming later
+    series_info = data.get('info', {})
+    series_name = series_info.get('name', 'Series')
     
+    flat_episodes = []
     if 'episodes' in data:
         for season_num, eps in data['episodes'].items():
             for ep in eps:
                 flat_episodes.append(ep)
                 
-    return render_template('episodes_partial.html', episodes=flat_episodes)
+    # Pass series_name to the template
+    return render_template('episodes_partial.html', episodes=flat_episodes, series_name=series_name)
 
 @app.route('/download/<kind>/<id>/<ext>')
 def start_download(kind, id, ext):
     global DOWNLOAD_STATE
     if DOWNLOAD_STATE['is_downloading']: return "<button disabled>⚠️ Busy</button>"
     
-    filename = f"{id}.{ext}"
+    # 1. Get the title from the query parameter (sent by frontend)
+    title_param = request.args.get('title')
+    
+    # 2. Determine final filename
+    if title_param:
+        safe_name = sanitize_filename(title_param)
+        filename = f"{safe_name}.{ext}"
+    else:
+        filename = f"{id}.{ext}" # Fallback if no name provided
+
     local_path = os.path.join(DOWNLOAD_PATH, filename)
     
-    # URL structure differs for Series vs Movies
     if kind == "movie":
         url = f"{XC_URL}/movie/{XC_USER}/{XC_PASS}/{id}.{ext}"
     else:

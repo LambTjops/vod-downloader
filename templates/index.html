@@ -2,9 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Xtream VOD Downloader (v3)</title>
+    <title>Xtream VOD Downloader (v4)</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    
     <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
     <style>
         #stream-list {
             display: flex !important;
@@ -38,6 +42,20 @@
             -webkit-box-orient: vertical;
             margin-bottom: 10px;
         }
+        /* Fix Tom Select Dark Mode integration with Pico CSS */
+        .ts-control {
+            background-color: var(--background-color);
+            color: var(--color);
+            border-color: var(--muted-border-color);
+        }
+        .ts-dropdown {
+            background-color: var(--card-background-color);
+            color: var(--color);
+        }
+        .ts-dropdown .option.active {
+            background-color: var(--primary);
+            color: var(--primary-inverse);
+        }
     </style>
 </head>
 <body class="container">
@@ -45,13 +63,13 @@
     
     <label>Select Category</label>
     
-    <input type="text" id="cat-search" placeholder="Type to filter categories..." onkeyup="filterCategories()">
-
     <select id="cat-select" name="category" 
+            placeholder="Type to search categories..."
+            autocomplete="off"
             hx-get="/streams" 
             hx-target="#stream-list" 
             hx-trigger="change">
-        <option value="" selected>Select a Category...</option>
+        <option value="">Select a Category...</option>
         {% for cat in categories %}
         <option value="{{ cat.type }}:{{ cat.category_id }}">{{ cat.display_name }}</option>
         {% endfor %}
@@ -61,22 +79,20 @@
     <div id="stream-list"></div>
 
     <script>
-        function filterCategories() {
-            var input = document.getElementById("cat-search");
-            var filter = input.value.toUpperCase();
-            var select = document.getElementById("cat-select");
-            var options = select.getElementsByTagName("option");
-
-            // Loop through all options, hide those that don't match
-            for (var i = 0; i < options.length; i++) {
-                var txtValue = options[i].textContent || options[i].innerText;
-                if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                    options[i].style.display = "";
-                } else {
-                    options[i].style.display = "none";
-                }
+        // Initialize Tom Select
+        new TomSelect("#cat-select",{
+            create: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            },
+            // This ensures HTMX detects the change when you select an item
+            onChange: function(value) {
+                // Manually trigger the 'change' event for HTMX
+                var event = new Event('change');
+                document.getElementById('cat-select').dispatchEvent(event);
             }
-        }
+        });
     </script>
 </body>
 </html>

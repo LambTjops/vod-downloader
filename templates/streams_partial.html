@@ -17,7 +17,7 @@
     <footer>
         {% if type == "movie" %}
             <button 
-                hx-get="/download/movie/{{ item.stream_id }}/{{ item.container_extension }}"
+                hx-get="/download/movie/{{ item.stream_id }}/{{ item.container_extension }}?title={{ item.name }}"
                 hx-swap="outerHTML"
                 class="secondary outline">
                 Download Movie

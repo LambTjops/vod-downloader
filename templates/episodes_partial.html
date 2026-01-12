@@ -13,9 +13,11 @@
             <small>{{ ep.title }}</small>
         </div>
 
-        <footer>
+<footer>
+            {% set full_name = series_name ~ " - S" ~ ep.season ~ "E" ~ ep.episode_num ~ " - " ~ ep.title %}
+            
             <button 
-                hx-get="/download/series/{{ ep.id }}/{{ ep.container_extension }}"
+                hx-get="/download/series/{{ ep.id }}/{{ ep.container_extension }}?title={{ full_name }}"
                 hx-swap="outerHTML"
                 class="secondary outline">
                 Download Episode
