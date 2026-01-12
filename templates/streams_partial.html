@@ -1,7 +1,12 @@
-<div id="status-bar-container" style="width: 100%; margin-bottom: 20px;">
+<div id="status-bar-container" style="width: 100%; margin-bottom: 2rem;">
     {% include 'progress_bar.html' ignore missing %}
 </div>
 
+{% if items|length == 0 %}
+<div style="text-align: center; padding: 3rem; color: #94a3b8;">
+    <p style="font-size: 1.1rem;">No items found in this category.</p>
+</div>
+{% else %}
 {% for item in items %}
 <article>
     <header>
@@ -11,10 +16,13 @@
     {% set img_url = item.stream_icon or item.cover or "" %}
     
     {% if img_url != "" %}
-        <img src="{{ img_url }}" loading="lazy" alt="Poster">
+        <img src="{{ img_url }}" loading="lazy" alt="{{ item.name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div style="height: 320px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); display: none; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.9rem;">
+            <span>📽️ No Image</span>
+        </div>
     {% else %}
-        <div style="height: 300px; background: #2d3748; display: flex; align-items: center; justify-content: center; color: #718096;">
-            No Image
+        <div style="height: 320px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.9rem;">
+            <span>📽️ No Image</span>
         </div>
     {% endif %}
     
@@ -23,18 +31,27 @@
             <button 
                 hx-get="/queue/add/movie/{{ item.stream_id }}/{{ item.container_extension }}?title={{ item.name }}"
                 hx-target="#status-bar-container"
-                class="secondary outline">
-                Add Movie to Queue
+                hx-swap="innerHTML"
+                class="secondary outline"
+                style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 500; transition: all 0.2s ease; border: 1.5px solid #334155; background: transparent; color: #f1f5f9; cursor: pointer;"
+                onmouseover="this.style.borderColor='#667eea'; this.style.color='#667eea'; this.style.background='rgba(102, 126, 234, 0.1)';"
+                onmouseout="this.style.borderColor='#334155'; this.style.color='#f1f5f9'; this.style.background='transparent';">
+                📥 Add to Queue
             </button>
         
         {% else %}
             <button 
                 hx-get="/episodes/{{ item.series_id }}"
                 hx-target="#stream-list"
-                class="primary">
-                View Episodes
+                hx-swap="innerHTML"
+                class="primary"
+                style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 500; transition: all 0.2s ease; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; cursor: pointer;"
+                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                ▶️ View Episodes
             </button>
         {% endif %}
     </footer>
 </article>
 {% endfor %}
+{% endif %}

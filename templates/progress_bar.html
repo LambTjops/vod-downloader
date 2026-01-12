@@ -1,32 +1,68 @@
 <div hx-get="/status" hx-trigger="load delay:1s" hx-swap="outerHTML" 
-     style="padding: 10px; border-radius: 8px; background-color: #2d3748; margin-bottom: 10px; border: 1px solid #4a5568;">
+     style="padding: 1.5rem; border-radius: 12px; background: #1e293b; margin-bottom: 0; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">
     
     {% if state.is_downloading %}
-        <div style="margin-bottom: 5px; font-weight: bold; color: #63b3ed;">
-            Downloading: {{ state.current_file }}
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+            <div style="width: 12px; height: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; animation: pulse 2s infinite;"></div>
+            <div style="font-weight: 600; color: #f1f5f9; font-size: 1rem;">
+                Downloading: <span style="color: #667eea;">{{ state.current_file }}</span>
+            </div>
         </div>
         
-        <progress value="{{ state.percent }}" max="100" style="width: 100%;"></progress>
+        <div style="position: relative; width: 100%; height: 12px; background: #0f172a; border-radius: 8px; overflow: hidden; margin-bottom: 0.75rem; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);">
+            <div style="position: absolute; top: 0; left: 0; height: 100%; width: {{ state.percent }}%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); border-radius: 8px; transition: width 0.3s ease; box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);"></div>
+        </div>
         
-        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #cbd5e0;">
-            <span>{{ state.progress_mb }} MB / {{ "%.2f"|format(state.total_mb) }} MB</span>
-            <span>{{ state.percent }}%</span>
+        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #94a3b8;">
+            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>📊</span>
+                <span>{{ state.progress_mb }} MB / {{ "%.2f"|format(state.total_mb) }} MB</span>
+            </span>
+            <span style="font-weight: 600; color: #667eea;">{{ state.percent }}%</span>
         </div>
 
     {% else %}
-        <div style="color: #a0aec0; font-size: 0.9rem;">
-            {% if state.queue_size > 0 %}
-                Waiting for next file...
-            {% else %}
-                Queue Idle. Ready to download.
-            {% endif %}
+        <div style="display: flex; align-items: center; gap: 0.75rem; color: #94a3b8; font-size: 1rem;">
+            <div style="width: 12px; height: 12px; background: {% if state.queue_size > 0 %}#f59e0b{% else %}#10b981{% endif %}; border-radius: 50%;"></div>
+            <span>
+                {% if state.queue_size > 0 %}
+                    ⏳ Waiting for next file...
+                {% else %}
+                    ✅ Queue Idle. Ready to download.
+                {% endif %}
+            </span>
         </div>
     {% endif %}
 
-    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #4a5568; font-size: 0.85rem; color: #edf2f7; display: flex; align-items: center; gap: 10px;">
-        <span>📚 <strong>Queue:</strong> {{ state.queue_size }} files pending</span>
+    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #334155; font-size: 0.9rem; color: #f1f5f9; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.1rem;">📚</span>
+            <span><strong>Queue:</strong> <span style="color: {% if state.queue_size > 0 %}#f59e0b{% else %}#10b981{% endif %}; font-weight: 600;">{{ state.queue_size }}</span> file{{ 's' if state.queue_size != 1 else '' }} pending</span>
+        </span>
         {% if state.queue_size > 0 %}
-            <span class="loading-icon" style="animation: spin 1s infinite linear;">⚙️</span>
+            <span style="display: inline-block; animation: spin 1s linear infinite; font-size: 1.1rem;">⚙️</span>
         {% endif %}
     </div>
 </div>
+
+<style>
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.5;
+            transform: scale(1.1);
+        }
+    }
+    
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
