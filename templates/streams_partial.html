@@ -1,0 +1,24 @@
+{% for stream in streams %}
+<article>
+    <header>
+        <strong>{{ stream.name }}</strong>
+    </header>
+    
+    {% if stream.stream_icon and stream.stream_icon != "" %}
+        <img src="{{ stream.stream_icon }}" loading="lazy" alt="Poster">
+    {% else %}
+        <div style="height: 350px; background: #2d3748; display: flex; align-items: center; justify-content: center; color: #718096;">
+            No Image
+        </div>
+    {% endif %}
+    
+    <footer>
+        <button 
+            hx-get="/download/{{ stream.stream_id }}/{{ stream.container_extension }}"
+            hx-swap="outerHTML"
+            class="secondary outline">
+            Download
+        </button>
+    </footer>
+</article>
+{% endfor %}

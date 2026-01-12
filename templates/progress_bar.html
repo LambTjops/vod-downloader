@@ -1,0 +1,23 @@
+{% if state and state.is_downloading %}
+<div hx-get="/status" hx-trigger="load delay:1s" hx-swap="outerHTML">
+    <small>Downloading: {{ state.filename }}</small>
+    <progress value="{{ state.percent }}" max="100"></progress>
+    <small>{{ state.progress_mb }} MB / {{ "%.2f"|format(state.total_mb) }} MB ({{ state.status }})</small>
+</div>
+
+{% elif state and state.status == "Complete" %}
+<div style="background-color: #2d3748; padding: 10px; border-radius: 5px; color: #48bb78;">
+    ✅ Download Complete
+</div>
+
+{% elif state and "Error" in state.status %}
+<div style="background-color: #742a2a; padding: 10px; border-radius: 5px; color: white;">
+    ❌ {{ state.status }}
+</div>
+
+{% else %}
+<div hx-get="/status" hx-trigger="load delay:1s" hx-swap="outerHTML">
+    <small>Initializing Download...</small>
+    <progress></progress>
+</div>
+{% endif %}
