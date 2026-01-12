@@ -1,23 +1,32 @@
-{% if state and state.is_downloading %}
-<div hx-get="/status" hx-trigger="load delay:1s" hx-swap="outerHTML">
-    <small>Downloading: {{ state.filename }}</small>
-    <progress value="{{ state.percent }}" max="100"></progress>
-    <small>{{ state.progress_mb }} MB / {{ "%.2f"|format(state.total_mb) }} MB ({{ state.status }})</small>
-</div>
+<div hx-get="/status" hx-trigger="load delay:1s" hx-swap="outerHTML" 
+     style="padding: 10px; border-radius: 8px; background-color: #2d3748; margin-bottom: 10px; border: 1px solid #4a5568;">
+    
+    {% if state.is_downloading %}
+        <div style="margin-bottom: 5px; font-weight: bold; color: #63b3ed;">
+            Downloading: {{ state.current_file }}
+        </div>
+        
+        <progress value="{{ state.percent }}" max="100" style="width: 100%;"></progress>
+        
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #cbd5e0;">
+            <span>{{ state.progress_mb }} MB / {{ "%.2f"|format(state.total_mb) }} MB</span>
+            <span>{{ state.percent }}%</span>
+        </div>
 
-{% elif state and state.status == "Complete" %}
-<div style="background-color: #2d3748; padding: 10px; border-radius: 5px; color: #48bb78;">
-    ✅ Download Complete
-</div>
+    {% else %}
+        <div style="color: #a0aec0; font-size: 0.9rem;">
+            {% if state.queue_size > 0 %}
+                Waiting for next file...
+            {% else %}
+                Queue Idle. Ready to download.
+            {% endif %}
+        </div>
+    {% endif %}
 
-{% elif state and "Error" in state.status %}
-<div style="background-color: #742a2a; padding: 10px; border-radius: 5px; color: white;">
-    ❌ {{ state.status }}
+    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #4a5568; font-size: 0.85rem; color: #edf2f7; display: flex; align-items: center; gap: 10px;">
+        <span>📚 <strong>Queue:</strong> {{ state.queue_size }} files pending</span>
+        {% if state.queue_size > 0 %}
+            <span class="loading-icon" style="animation: spin 1s infinite linear;">⚙️</span>
+        {% endif %}
+    </div>
 </div>
-
-{% else %}
-<div hx-get="/status" hx-trigger="load delay:1s" hx-swap="outerHTML">
-    <small>Initializing Download...</small>
-    <progress></progress>
-</div>
-{% endif %}

@@ -1,3 +1,7 @@
+<div id="status-bar-container" style="width: 100%; margin-bottom: 20px;">
+    {% include 'progress_bar.html' ignore missing %}
+</div>
+
 {% for item in items %}
 <article>
     <header>
@@ -17,10 +21,10 @@
     <footer>
         {% if type == "movie" %}
             <button 
-                hx-get="/download/movie/{{ item.stream_id }}/{{ item.container_extension }}?title={{ item.name }}"
-                hx-swap="outerHTML"
+                hx-get="/queue/add/movie/{{ item.stream_id }}/{{ item.container_extension }}?title={{ item.name }}"
+                hx-target="#status-bar-container"
                 class="secondary outline">
-                Download Movie
+                Add Movie to Queue
             </button>
         
         {% else %}

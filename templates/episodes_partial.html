@@ -1,4 +1,20 @@
-<button onclick="window.location.reload()" class="contrast" style="margin-bottom: 20px;">⬅ Back to Categories</button>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <button onclick="window.location.reload()" class="contrast outline">⬅ Back to Categories</button>
+    
+    <button 
+        hx-get="/queue/batch_series/{{ series_id }}"
+        hx-target="#status-bar-container"
+        class="primary"
+        style="background-color: #d69e2e; border-color: #d69e2e; color: black; font-weight: bold;">
+        📥 Download All Episodes (Batch)
+    </button>
+</div>
+
+<div id="status-bar-container">
+    {% include 'progress_bar.html' ignore missing %}
+</div>
+
+<hr/>
 
 <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
     {% for ep in episodes %}
@@ -13,14 +29,14 @@
             <small>{{ ep.title }}</small>
         </div>
 
-<footer>
+        <footer>
             {% set full_name = series_name ~ " - S" ~ ep.season ~ "E" ~ ep.episode_num ~ " - " ~ ep.title %}
-            
             <button 
-                hx-get="/download/series/{{ ep.id }}/{{ ep.container_extension }}?title={{ full_name }}"
-                hx-swap="outerHTML"
+                hx-get="/queue/add/series/{{ ep.id }}/{{ ep.container_extension }}?title={{ full_name }}"
+                hx-swap="none"
+                onclick="alert('Added to Queue!')"
                 class="secondary outline">
-                Download Episode
+                Add to Queue
             </button>
         </footer>
     </article>
