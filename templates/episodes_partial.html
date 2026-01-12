@@ -1,0 +1,26 @@
+<button onclick="window.location.reload()" class="contrast" style="margin-bottom: 20px;">⬅ Back to Categories</button>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+    {% for ep in episodes %}
+    <article style="width: 300px; flex: 0 0 300px;">
+        <header>S{{ ep.season }} E{{ ep.episode_num }}</header>
+        
+        {% if ep.info and ep.info.movie_image %}
+        <img src="{{ ep.info.movie_image }}" style="height: 150px; width: 100%; object-fit: cover;">
+        {% endif %}
+        
+        <div style="padding: 10px;">
+            <small>{{ ep.title }}</small>
+        </div>
+
+        <footer>
+            <button 
+                hx-get="/download/series/{{ ep.id }}/{{ ep.container_extension }}"
+                hx-swap="outerHTML"
+                class="secondary outline">
+                Download Episode
+            </button>
+        </footer>
+    </article>
+    {% endfor %}
+</div>

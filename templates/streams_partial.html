@@ -1,24 +1,36 @@
-{% for stream in streams %}
+{% for item in items %}
 <article>
     <header>
-        <strong>{{ stream.name }}</strong>
+        <strong>{{ item.name }}</strong>
     </header>
     
-    {% if stream.stream_icon and stream.stream_icon != "" %}
-        <img src="{{ stream.stream_icon }}" loading="lazy" alt="Poster">
+    {% set img_url = item.stream_icon or item.cover or "" %}
+    
+    {% if img_url != "" %}
+        <img src="{{ img_url }}" loading="lazy" alt="Poster">
     {% else %}
-        <div style="height: 350px; background: #2d3748; display: flex; align-items: center; justify-content: center; color: #718096;">
+        <div style="height: 300px; background: #2d3748; display: flex; align-items: center; justify-content: center; color: #718096;">
             No Image
         </div>
     {% endif %}
     
     <footer>
-        <button 
-            hx-get="/download/{{ stream.stream_id }}/{{ stream.container_extension }}"
-            hx-swap="outerHTML"
-            class="secondary outline">
-            Download
-        </button>
+        {% if type == "movie" %}
+            <button 
+                hx-get="/download/movie/{{ item.stream_id }}/{{ item.container_extension }}"
+                hx-swap="outerHTML"
+                class="secondary outline">
+                Download Movie
+            </button>
+        
+        {% else %}
+            <button 
+                hx-get="/episodes/{{ item.series_id }}"
+                hx-target="#stream-list"
+                class="primary">
+                View Episodes
+            </button>
+        {% endif %}
     </footer>
 </article>
 {% endfor %}
