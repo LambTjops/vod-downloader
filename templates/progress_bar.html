@@ -23,9 +23,13 @@
 
     {% else %}
         <div style="display: flex; align-items: center; gap: 0.75rem; color: #94a3b8; font-size: 1rem;">
-            <div style="width: 12px; height: 12px; background: {% if state.queue_size > 0 %}#f59e0b{% else %}#10b981{% endif %}; border-radius: 50%;"></div>
+            <div style="width: 12px; height: 12px; background: {% if state.stopped %}#ef4444{% elif state.paused %}#f59e0b{% elif state.queue_size > 0 %}#f59e0b{% else %}#10b981{% endif %}; border-radius: 50%;"></div>
             <span>
-                {% if state.queue_size > 0 %}
+                {% if state.stopped %}
+                    ⏹️ Downloads Stopped
+                {% elif state.paused %}
+                    ⏸️ Downloads Paused
+                {% elif state.queue_size > 0 %}
                     ⏳ Waiting for next file...
                 {% else %}
                     ✅ Queue Idle. Ready to download.

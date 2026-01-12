@@ -28,16 +28,26 @@
     
     <footer>
         {% if type == "movie" %}
-            <button 
-                hx-get="/queue/add/movie/{{ item.stream_id }}/{{ item.container_extension }}?title={{ item.name }}"
-                hx-target="#status-bar-container"
-                hx-swap="innerHTML"
-                class="secondary outline"
-                style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 500; transition: all 0.2s ease; border: 1.5px solid #334155; background: transparent; color: #f1f5f9; cursor: pointer;"
-                onmouseover="this.style.borderColor='#667eea'; this.style.color='#667eea'; this.style.background='rgba(102, 126, 234, 0.1)';"
-                onmouseout="this.style.borderColor='#334155'; this.style.color='#f1f5f9'; this.style.background='transparent';">
-                📥 Add to Queue
-            </button>
+            {% set item_id = "movie:" ~ item.stream_id %}
+            {% if item_id in queued_items %}
+                <button 
+                    disabled
+                    style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 500; border: 1.5px solid #10b981; background: rgba(16, 185, 129, 0.1); color: #10b981; cursor: not-allowed; opacity: 0.8;">
+                    ✓ Already in Queue
+                </button>
+            {% else %}
+                <button 
+                    hx-get="/queue/add/movie/{{ item.stream_id }}/{{ item.container_extension }}?title={{ item.name }}"
+                    hx-target="#status-bar-container"
+                    hx-swap="innerHTML"
+                    hx-on::after-request="if(event.detail.xhr.status === 200) { this.textContent='✓ Added!'; this.disabled=true; this.style.borderColor='#10b981'; this.style.color='#10b981'; this.style.background='rgba(16, 185, 129, 0.1)'; if(typeof refreshQueue === 'function') refreshQueue(); setTimeout(() => window.location.reload(), 1000); }"
+                    class="secondary outline"
+                    style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 500; transition: all 0.2s ease; border: 1.5px solid #334155; background: transparent; color: #f1f5f9; cursor: pointer;"
+                    onmouseover="if(!this.disabled) { this.style.borderColor='#667eea'; this.style.color='#667eea'; this.style.background='rgba(102, 126, 234, 0.1)'; }"
+                    onmouseout="if(!this.disabled) { this.style.borderColor='#334155'; this.style.color='#f1f5f9'; this.style.background='transparent'; }">
+                    📥 Add to Queue
+                </button>
+            {% endif %}
         
         {% else %}
             <button 

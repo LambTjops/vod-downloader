@@ -1,0 +1,253 @@
+<div id="queue-manager" style="background: #1e293b; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #f1f5f9; display: flex; align-items: center; gap: 0.5rem;">
+            <span>📋</span> Queue Manager
+        </h2>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button 
+                id="btn-pause" 
+                onclick="togglePause()"
+                style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 500; background: #f59e0b; color: white; border: none; cursor: pointer; transition: all 0.2s ease; display: none;"
+                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                ⏸️ Pause
+            </button>
+            <button 
+                id="btn-resume" 
+                onclick="toggleResume()"
+                style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 500; background: #10b981; color: white; border: none; cursor: pointer; transition: all 0.2s ease; display: none;"
+                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                ▶️ Resume
+            </button>
+            <button 
+                onclick="stopQueue()"
+                style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 500; background: #ef4444; color: white; border: none; cursor: pointer; transition: all 0.2s ease;"
+                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                ⏹️ Stop
+            </button>
+            <button 
+                onclick="clearQueue()"
+                style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 500; background: transparent; color: #f1f5f9; border: 1.5px solid #334155; cursor: pointer; transition: all 0.2s ease;"
+                onmouseover="this.style.borderColor='#ef4444'; this.style.color='#ef4444';"
+                onmouseout="this.style.borderColor='#334155'; this.style.color='#f1f5f9';">
+                🗑️ Clear Queue
+            </button>
+            <button 
+                onclick="refreshQueue()"
+                style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 500; background: transparent; color: #f1f5f9; border: 1.5px solid #334155; cursor: pointer; transition: all 0.2s ease;"
+                onmouseover="this.style.borderColor='#667eea'; this.style.color='#667eea';"
+                onmouseout="this.style.borderColor='#334155'; this.style.color='#f1f5f9';">
+                🔄 Refresh
+            </button>
+        </div>
+    </div>
+
+    <div id="queue-list" style="max-height: 400px; overflow-y: auto; border-radius: 8px; background: #0f172a; padding: 1rem;">
+        <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+            <p>Loading queue...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+let queueItems = [];
+let isPaused = false;
+
+function refreshQueue() {
+    fetch('/queue/list')
+        .then(r => r.json())
+        .then(data => {
+            queueItems = data.items || [];
+            renderQueue();
+        })
+        .catch(err => {
+            console.error('Error loading queue:', err);
+            document.getElementById('queue-list').innerHTML = 
+                '<div style="text-align: center; padding: 2rem; color: #ef4444;">Error loading queue</div>';
+        });
+}
+
+function renderQueue() {
+    const container = document.getElementById('queue-list');
+    
+    if (queueItems.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #94a3b8;"><p>Queue is empty</p></div>';
+        return;
+    }
+    
+    let html = '<div style="display: flex; flex-direction: column; gap: 0.5rem;">';
+    
+    queueItems.forEach((item, idx) => {
+        const isFirst = idx === 0;
+        html += `
+            <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: ${isFirst ? '#1e293b' : '#0f172a'}; border-radius: 8px; border: 1px solid #334155; ${isFirst ? 'border-color: #667eea;' : ''}">
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0;">
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: ${isFirst ? '#667eea' : '#94a3b8'}; font-weight: 600; font-size: 0.85rem;">#${idx + 1}</span>
+                            ${isFirst ? '<span style="background: #667eea; color: white; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">DOWNLOADING</span>' : ''}
+                        </div>
+                        <div style="color: #f1f5f9; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(item.name)}</div>
+                        <div style="color: #94a3b8; font-size: 0.85rem; text-transform: capitalize;">${item.kind}</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    ${idx > 0 ? `
+                        <button onclick="moveUp(${idx})" style="padding: 0.5rem; border-radius: 6px; background: transparent; color: #94a3b8; border: 1px solid #334155; cursor: pointer; transition: all 0.2s ease;" 
+                                onmouseover="this.style.borderColor='#667eea'; this.style.color='#667eea';"
+                                onmouseout="this.style.borderColor='#334155'; this.style.color='#94a3b8';"
+                                title="Move up">↑</button>
+                    ` : ''}
+                    ${idx < queueItems.length - 1 ? `
+                        <button onclick="moveDown(${idx})" style="padding: 0.5rem; border-radius: 6px; background: transparent; color: #94a3b8; border: 1px solid #334155; cursor: pointer; transition: all 0.2s ease;"
+                                onmouseover="this.style.borderColor='#667eea'; this.style.color='#667eea';"
+                                onmouseout="this.style.borderColor='#334155'; this.style.color='#94a3b8';"
+                                title="Move down">↓</button>
+                    ` : ''}
+                    ${!isFirst ? `
+                        <button onclick="removeItem('${item.id}')" style="padding: 0.5rem; border-radius: 6px; background: transparent; color: #ef4444; border: 1px solid #ef4444; cursor: pointer; transition: all 0.2s ease;"
+                                onmouseover="this.style.background='rgba(239, 68, 68, 0.1)';"
+                                onmouseout="this.style.background='transparent';"
+                                title="Remove">✕</button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function moveUp(index) {
+    if (index <= 0) return;
+    const newOrder = [...queueItems.map(i => i.id)];
+    [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
+    reorderQueue(newOrder);
+}
+
+function moveDown(index) {
+    if (index >= queueItems.length - 1) return;
+    const newOrder = [...queueItems.map(i => i.id)];
+    [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+    reorderQueue(newOrder);
+}
+
+function reorderQueue(newOrder) {
+    fetch('/queue/reorder', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({order: newOrder})
+    })
+    .then(r => r.json())
+    .then(data => {
+        refreshQueue();
+    })
+    .catch(err => console.error('Error reordering:', err));
+}
+
+function removeItem(jobId) {
+    if (!confirm('Remove this item from queue?')) return;
+    
+    fetch(`/queue/remove/${jobId}`, {
+        method: 'DELETE'
+    })
+    .then(r => r.json())
+    .then(data => {
+        refreshQueue();
+        // Refresh the page to update "Already in Queue" status
+        setTimeout(() => window.location.reload(), 500);
+    })
+    .catch(err => console.error('Error removing item:', err));
+}
+
+function togglePause() {
+    fetch('/queue/pause', {method: 'POST'})
+        .then(r => r.json())
+        .then(data => {
+            isPaused = true;
+            updatePauseButtons();
+        })
+        .catch(err => console.error('Error pausing:', err));
+}
+
+function toggleResume() {
+    fetch('/queue/resume', {method: 'POST'})
+        .then(r => r.json())
+        .then(data => {
+            isPaused = false;
+            updatePauseButtons();
+        })
+        .catch(err => console.error('Error resuming:', err));
+}
+
+function stopQueue() {
+    if (!confirm('Stop all downloads? Current download will be interrupted.')) return;
+    
+    fetch('/queue/stop', {method: 'POST'})
+        .then(r => r.json())
+        .then(data => {
+            refreshQueue();
+        })
+        .catch(err => console.error('Error stopping:', err));
+}
+
+function clearQueue() {
+    if (!confirm('Clear all pending downloads from queue?')) return;
+    
+    fetch('/queue/clear', {method: 'POST'})
+        .then(r => r.json())
+        .then(data => {
+            refreshQueue();
+            setTimeout(() => window.location.reload(), 500);
+        })
+        .catch(err => console.error('Error clearing:', err));
+}
+
+function updatePauseButtons() {
+    const btnPause = document.getElementById('btn-pause');
+    const btnResume = document.getElementById('btn-resume');
+    
+    if (isPaused) {
+        btnPause.style.display = 'none';
+        btnResume.style.display = 'block';
+    } else {
+        btnPause.style.display = 'block';
+        btnResume.style.display = 'none';
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Auto-refresh queue every 2 seconds
+setInterval(refreshQueue, 2000);
+refreshQueue();
+
+// Check pause status from server
+function checkPauseStatus() {
+    fetch('/status')
+        .then(r => r.text())
+        .then(html => {
+            // Parse pause status from progress bar
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const statusDiv = doc.querySelector('[hx-get="/status"]');
+            if (statusDiv) {
+                const statusText = statusDiv.textContent || '';
+                isPaused = statusText.includes('Paused');
+                updatePauseButtons();
+            }
+        })
+        .catch(err => console.error('Error checking status:', err));
+}
+
+// Check status every 2 seconds
+setInterval(checkPauseStatus, 2000);
+checkPauseStatus();
+</script>
