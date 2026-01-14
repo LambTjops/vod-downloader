@@ -138,7 +138,7 @@
                         📥 Queue
                     </button>
                     <button 
-                        onclick="markAsDownloaded('series', '{{ ep.id }}', this, '{{ ep._item_id }}')"
+                        onclick="markAsDownloaded('series', '{{ ep.id }}', this, '{{ ep._item_id }}', '{{ series_id }}')"
                         style="padding: 0.6rem 0.75rem; border-radius: 8px; font-weight: 500; border: 1.5px solid #3b82f6; background: transparent; color: #3b82f6; cursor: pointer; transition: all 0.2s ease; font-size: 0.85rem;"
                         onmouseover="this.style.background='rgba(59, 130, 246, 0.1)';"
                         onmouseout="this.style.background='transparent';"
@@ -188,16 +188,30 @@ function updateEpisodeButton(button, status) {
     }
 }
 
-function markAsDownloaded(kind, id, button, itemId) {
+function markAsDownloaded(kind, id, button, itemId, seriesId) {
     if (!confirm('Mark this episode as downloaded?')) return;
     
     const originalHTML = button.innerHTML;
     button.disabled = true;
     button.innerHTML = '⏳';
     
-    fetch(`/queue/mark_downloaded/${kind}/${id}`, {method: 'POST'})
-        .then(r => r.json())
+    // Include series_id as query parameter to help find episode info
+    const url = seriesId ? 
+        `/queue/mark_downloaded/${kind}/${id}?series_id=${seriesId}` :
+        `/queue/mark_downloaded/${kind}/${id}`;
+    
+    fetch(url, {method: 'POST'})
+        .then(r => {
+            if (!r.ok) {
+                return r.json().then(err => Promise.reject(err));
+            }
+            return r.json();
+        })
         .then(data => {
+            if (data.status === 'error') {
+                throw new Error(data.message || 'Unknown error');
+            }
+            
             const card = button.closest('.episode-card');
             const footer = card.querySelector('footer');
             
@@ -220,10 +234,28 @@ function markAsDownloaded(kind, id, button, itemId) {
                 statusSpan.textContent = '✓';
                 statusSpan.style.color = '#3b82f6';
             }
+            
+            console.log('Successfully marked as downloaded:', data);
         })
         .catch(err => {
             console.error('Error marking as downloaded:', err);
-            alert('Error marking as downloaded. Check console for details.');
+            let errorMsg = 'Unknown error';
+            let dbFile = 'unknown';
+            
+            if (err.message) {
+                errorMsg = err.message;
+            } else if (err.statusText) {
+                errorMsg = err.statusText;
+            } else if (typeof err === 'string') {
+                errorMsg = err;
+            }
+            
+            // Extract database file info if available
+            if (err.db_file) {
+                dbFile = err.db_file;
+            }
+            
+            alert(`Error marking as downloaded:\n\n${errorMsg}\n\nDatabase file: ${dbFile}\n\nCheck browser console and server logs for details.`);
             button.disabled = false;
             button.innerHTML = originalHTML;
         });

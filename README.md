@@ -22,7 +22,8 @@ A modern web-based Video-On-Demand (VOD) downloader for Xtream Codes API provide
 - **Persistent Storage**: Downloads tracked in `downloaded_items.json`
 - **Duplicate Prevention**: Prevents re-downloading already downloaded items
 - **Manual Marking**: Mark items as downloaded manually
-- **Auto-scan**: Scan download folder and auto-match files
+- **Auto-scan on Startup**: Automatically scans download folder when app starts
+- **Smart File Matching**: Fast file scanning (no API calls) with automatic matching when viewing categories
 - **Status Indicators**: Visual indicators for downloaded/queued/available items
 
 ### User Interface
@@ -127,6 +128,8 @@ The application stores downloaded items in `downloaded_items.json` located in th
 - Works even if files are moved or deleted
 - Tracks by item ID, not file path
 - Stores metadata (download time, filename, size)
+- Auto-scans download folder on startup for fast matching
+- Smart matching: only processes categories you view (no need to fetch all categories)
 
 ## API Endpoints
 
@@ -143,7 +146,7 @@ The application stores downloaded items in `downloaded_items.json` located in th
 - `GET /queue/downloaded` - List all downloaded items
 - `POST /queue/mark_downloaded/<kind>/<id>` - Mark item as downloaded
 - `POST /queue/mark_all_episodes_downloaded/<series_id>` - Mark all episodes
-- `POST /queue/scan_files` - Scan and auto-match files
+- `POST /queue/scan_files` - Manually scan and index files (auto-scans on startup)
 - `DELETE /queue/downloaded/<item_id>` - Remove from downloaded list
 
 ### Status

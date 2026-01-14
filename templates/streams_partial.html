@@ -104,8 +104,17 @@ function markMovieAsDownloaded(kind, id, button, itemId) {
     button.innerHTML = '⏳';
     
     fetch(`/queue/mark_downloaded/${kind}/${id}`, {method: 'POST'})
-        .then(r => r.json())
+        .then(r => {
+            if (!r.ok) {
+                return r.json().then(err => Promise.reject(err));
+            }
+            return r.json();
+        })
         .then(data => {
+            if (data.status === 'error') {
+                throw new Error(data.message || 'Unknown error');
+            }
+            
             // Update the entire footer without redirect
             const article = button.closest('article');
             const footer = article.querySelector('footer');
@@ -116,10 +125,12 @@ function markMovieAsDownloaded(kind, id, button, itemId) {
                     ✓ Already Downloaded
                 </button>
             `;
+            console.log('Successfully marked as downloaded:', data);
         })
         .catch(err => {
             console.error('Error marking as downloaded:', err);
-            alert('Error marking as downloaded. Check console for details.');
+            const errorMsg = err.message || err.statusText || 'Unknown error';
+            alert(`Error marking as downloaded: ${errorMsg}\n\nCheck browser console and server logs for details.`);
             button.disabled = false;
             button.innerHTML = originalHTML;
         });

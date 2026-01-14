@@ -10,7 +10,7 @@
 This file is created automatically when you:
 1. Mark an item as downloaded (manually or automatically)
 2. Complete a download successfully
-3. Use the "Scan Files" feature
+3. Use the "Scan Files" feature (also auto-scans on startup)
 
 **To verify the file location:**
 - Check console output when the app starts (shows full path)
@@ -68,7 +68,9 @@ This file is created automatically when you:
 - [x] Manual marking works
 - [x] Batch marking works
 - [x] Auto-marking on download completion works
-- [x] File scanning works
+- [x] File scanning works (fast, no API calls)
+- [x] Auto-scan on startup
+- [x] Smart matching when viewing categories
 
 ### UI Improvements ✅
 - [x] No redirects when marking items
@@ -163,5 +165,7 @@ This file is created automatically when you:
 - ✅ Persists across restarts
 - ✅ Tracks by item_id (not file path)
 - ✅ Works even if files are moved
+- ✅ Auto-scans download folder on startup
+- ✅ Fast file matching (no API calls, only processes viewed categories)
 - ✅ Comprehensive error handling
 - ✅ Full documentation provided
