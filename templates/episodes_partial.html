@@ -1,78 +1,257 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-    <button 
-        onclick="window.location.reload()" 
-        style="padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 500; background: #1e293b; color: #f1f5f9; border: 1.5px solid #334155; cursor: pointer; transition: all 0.2s ease;"
-        onmouseover="this.style.borderColor='#667eea'; this.style.color='#667eea';"
-        onmouseout="this.style.borderColor='#334155'; this.style.color='#f1f5f9';">
-        ← Back to Categories
-    </button>
+<!-- Sticky Header with Controls -->
+<div id="episodes-header" style="position: sticky; top: 0; z-index: 100; background: #0f172a; padding: 1.5rem; margin: -2rem -1.5rem 2rem -1.5rem; border-bottom: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem; font-weight: 600; color: #f1f5f9;">{{ series_name }}</h2>
+            <p style="margin: 0; color: #94a3b8; font-size: 0.9rem;">{{ episodes|length }} episode{{ 's' if episodes|length != 1 else '' }}</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button 
+                onclick="window.location.reload()" 
+                style="padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 500; background: #1e293b; color: #f1f5f9; border: 1.5px solid #334155; cursor: pointer; transition: all 0.2s ease;"
+                onmouseover="this.style.borderColor='#667eea'; this.style.color='#667eea';"
+                onmouseout="this.style.borderColor='#334155'; this.style.color='#f1f5f9';">
+                ← Back to Categories
+            </button>
+            <button 
+                onclick="markAllEpisodesDownloaded('{{ series_id }}')"
+                style="padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 500; background: transparent; color: #3b82f6; border: 1.5px solid #3b82f6; cursor: pointer; transition: all 0.2s ease;"
+                onmouseover="this.style.background='rgba(59, 130, 246, 0.1)';"
+                onmouseout="this.style.background='transparent';">
+                ✓ Mark All as Downloaded
+            </button>
+            <button 
+                hx-get="/queue/batch_series/{{ series_id }}"
+                hx-target="#status-bar-container"
+                hx-swap="innerHTML"
+                style="padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);"
+                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';">
+                📥 Download All Episodes
+            </button>
+        </div>
+    </div>
     
-    <button 
-        hx-get="/queue/batch_series/{{ series_id }}"
-        hx-target="#status-bar-container"
-        hx-swap="innerHTML"
-        style="padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);"
-        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';"
-        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';">
-        📥 Download All Episodes
-    </button>
+    <!-- Search and Filter -->
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+        <input 
+            type="text" 
+            id="episode-search" 
+            placeholder="Search episodes..." 
+            oninput="filterEpisodes()"
+            style="flex: 1; min-width: 200px; padding: 0.75rem 1rem; border-radius: 8px; background: #1e293b; color: #f1f5f9; border: 1.5px solid #334155; font-size: 0.9rem;"
+            onfocus="this.style.borderColor='#667eea';"
+            onblur="this.style.borderColor='#334155';">
+        <select 
+            id="season-filter" 
+            onchange="filterEpisodes()"
+            style="padding: 0.75rem 1rem; border-radius: 8px; background: #1e293b; color: #f1f5f9; border: 1.5px solid #334155; font-size: 0.9rem; cursor: pointer;"
+            onfocus="this.style.borderColor='#667eea';"
+            onblur="this.style.borderColor='#334155';">
+            <option value="">All Seasons</option>
+            {% for season_num in episodes_by_season.keys()|sort %}
+            <option value="S{{ season_num }}">Season {{ season_num }}</option>
+            {% endfor %}
+        </select>
+        <select 
+            id="status-filter" 
+            onchange="filterEpisodes()"
+            style="padding: 0.75rem 1rem; border-radius: 8px; background: #1e293b; color: #f1f5f9; border: 1.5px solid #334155; font-size: 0.9rem; cursor: pointer;"
+            onfocus="this.style.borderColor='#667eea';"
+            onblur="this.style.borderColor='#334155';">
+            <option value="">All Status</option>
+            <option value="downloaded">Already Downloaded</option>
+            <option value="queued">In Queue</option>
+            <option value="available">Available</option>
+        </select>
+    </div>
 </div>
 
 <div id="status-bar-container" style="margin-bottom: 2rem;">
     {% include 'progress_bar.html' ignore missing %}
 </div>
 
-<hr style="border-color: #334155; margin: 2rem 0;"/>
-
-<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+<!-- Episodes Grid -->
+<div id="episodes-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem;">
     {% for ep in episodes %}
-    <article style="background: #1e293b; border-radius: 12px; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #334155; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); margin: 0;"
-             onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'; this.style.borderColor='#667eea';"
-             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'; this.style.borderColor='#334155';">
-        <header style="padding: 1rem; font-size: 1rem; font-weight: 600; color: #f1f5f9; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);">
-            <span style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-right: 0.5rem;">S{{ ep.season }}E{{ ep.episode_num }}</span>
+    <article 
+        class="episode-card"
+        data-season="S{{ ep.season }}"
+        data-title="{{ ep.title|lower }}"
+        data-status="{% if ep._item_id in queued_items %}queued{% elif ep._is_downloaded %}downloaded{% else %}available{% endif %}"
+        style="background: #1e293b; border-radius: 12px; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #334155; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); margin: 0;"
+        onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'; this.style.borderColor='#667eea';"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'; this.style.borderColor='#334155';">
+        <header style="padding: 0.75rem; font-size: 0.9rem; font-weight: 600; color: #f1f5f9; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); display: flex; justify-content: space-between; align-items: center;">
+            <span style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.8rem;">S{{ ep.season }}E{{ ep.episode_num }}</span>
+            {% if ep._is_downloaded %}
+            <span style="font-size: 0.75rem; color: #3b82f6;">✓</span>
+            {% elif ep._item_id in queued_items %}
+            <span style="font-size: 0.75rem; color: #10b981;">⏳</span>
+            {% endif %}
         </header>
         
         {% if ep.info and ep.info.movie_image %}
         <img src="{{ ep.info.movie_image }}" 
-             style="height: 200px; width: 100%; object-fit: cover; display: block;"
+             style="height: 160px; width: 100%; object-fit: cover; display: block;"
              loading="lazy"
              alt="Episode {{ ep.episode_num }}"
              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-        <div style="height: 200px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); display: none; align-items: center; justify-content: center; color: #94a3b8;">
+        <div style="height: 160px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); display: none; align-items: center; justify-content: center; color: #94a3b8;">
             <span>📺</span>
         </div>
         {% else %}
-        <div style="height: 200px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+        <div style="height: 160px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); display: flex; align-items: center; justify-content: center; color: #94a3b8;">
             <span>📺</span>
         </div>
         {% endif %}
         
-        <div style="padding: 1rem; flex-grow: 1;">
-            <p style="margin: 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.5;">{{ ep.title }}</p>
+        <div style="padding: 0.75rem; flex-grow: 1;">
+            <p style="margin: 0; color: #94a3b8; font-size: 0.85rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ ep.title }}</p>
         </div>
 
-        <footer style="padding: 1rem; margin-top: auto;">
+        <footer style="padding: 0.75rem; margin-top: auto;">
             {% set full_name = series_name ~ " - S" ~ ep.season ~ "E" ~ ep.episode_num ~ " - " ~ ep.title %}
             {% set item_id = "series:" ~ ep.id %}
+            
             {% if item_id in queued_items %}
                 <button 
                     disabled
-                    style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 500; border: 1.5px solid #10b981; background: rgba(16, 185, 129, 0.1); color: #10b981; cursor: not-allowed; opacity: 0.8;">
-                    ✓ Already in Queue
+                    style="width: 100%; padding: 0.6rem 0.75rem; border-radius: 8px; font-weight: 500; border: 1.5px solid #10b981; background: rgba(16, 185, 129, 0.1); color: #10b981; cursor: not-allowed; opacity: 0.8; font-size: 0.85rem;">
+                    ✓ In Queue
+                </button>
+            {% elif ep._is_downloaded %}
+                <button 
+                    disabled
+                    style="width: 100%; padding: 0.6rem 0.75rem; border-radius: 8px; font-weight: 500; border: 1.5px solid #3b82f6; background: rgba(59, 130, 246, 0.1); color: #3b82f6; cursor: not-allowed; opacity: 0.8; font-size: 0.85rem;">
+                    ✓ Downloaded
                 </button>
             {% else %}
-                <button 
-                    hx-get="/queue/add/series/{{ ep.id }}/{{ ep.container_extension }}?title={{ full_name }}"
-                    hx-swap="none"
-                    hx-on::after-request="if(event.detail.xhr.status === 200) { this.textContent='✓ Added!'; this.disabled=true; this.style.borderColor='#10b981'; this.style.color='#10b981'; this.style.background='rgba(16, 185, 129, 0.1)'; if(typeof refreshQueue === 'function') refreshQueue(); setTimeout(() => window.location.reload(), 1000); }"
-                    style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 500; transition: all 0.2s ease; border: 1.5px solid #334155; background: transparent; color: #f1f5f9; cursor: pointer;"
-                    onmouseover="if(!this.disabled) { this.style.borderColor='#667eea'; this.style.color='#667eea'; this.style.background='rgba(102, 126, 234, 0.1)'; }"
-                    onmouseout="if(!this.disabled) { this.style.borderColor='#334155'; this.style.color='#f1f5f9'; this.style.background='transparent'; }">
-                    📥 Add to Queue
-                </button>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button 
+                        hx-get="/queue/add/series/{{ ep.id }}/{{ ep.container_extension }}?title={{ full_name }}"
+                        hx-swap="none"
+                        hx-on::after-request="if(event.detail.xhr.status === 200) { updateEpisodeButton(this, 'queued'); if(typeof refreshQueue === 'function') refreshQueue(); }"
+                        style="flex: 1; padding: 0.6rem 0.75rem; border-radius: 8px; font-weight: 500; transition: all 0.2s ease; border: 1.5px solid #334155; background: transparent; color: #f1f5f9; cursor: pointer; font-size: 0.85rem;"
+                        onmouseover="if(!this.disabled) { this.style.borderColor='#667eea'; this.style.color='#667eea'; this.style.background='rgba(102, 126, 234, 0.1)'; }"
+                        onmouseout="if(!this.disabled) { this.style.borderColor='#334155'; this.style.color='#f1f5f9'; this.style.background='transparent'; }">
+                        📥 Queue
+                    </button>
+                    <button 
+                        onclick="markAsDownloaded('series', '{{ ep.id }}', this, '{{ ep._item_id }}')"
+                        style="padding: 0.6rem 0.75rem; border-radius: 8px; font-weight: 500; border: 1.5px solid #3b82f6; background: transparent; color: #3b82f6; cursor: pointer; transition: all 0.2s ease; font-size: 0.85rem;"
+                        onmouseover="this.style.background='rgba(59, 130, 246, 0.1)';"
+                        onmouseout="this.style.background='transparent';"
+                        title="Mark as Downloaded">
+                        ✓
+                    </button>
+                </div>
             {% endif %}
         </footer>
     </article>
     {% endfor %}
 </div>
+
+<script>
+function filterEpisodes() {
+    const searchTerm = document.getElementById('episode-search').value.toLowerCase();
+    const seasonFilter = document.getElementById('season-filter').value;
+    const statusFilter = document.getElementById('status-filter').value;
+    const cards = document.querySelectorAll('.episode-card');
+    
+    cards.forEach(card => {
+        const title = card.getAttribute('data-title') || '';
+        const season = card.getAttribute('data-season') || '';
+        const status = card.getAttribute('data-status') || '';
+        
+        const matchesSearch = !searchTerm || title.includes(searchTerm) || season.toLowerCase().includes(searchTerm);
+        const matchesSeason = !seasonFilter || season === seasonFilter;
+        const matchesStatus = !statusFilter || status === statusFilter;
+        
+        if (matchesSearch && matchesSeason && matchesStatus) {
+            card.style.display = 'flex';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function updateEpisodeButton(button, status) {
+    const card = button.closest('.episode-card');
+    if (status === 'queued') {
+        button.disabled = true;
+        button.textContent = '✓ In Queue';
+        button.style.borderColor = '#10b981';
+        button.style.color = '#10b981';
+        button.style.background = 'rgba(16, 185, 129, 0.1)';
+        card.setAttribute('data-status', 'queued');
+    }
+}
+
+function markAsDownloaded(kind, id, button, itemId) {
+    if (!confirm('Mark this episode as downloaded?')) return;
+    
+    const originalHTML = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '⏳';
+    
+    fetch(`/queue/mark_downloaded/${kind}/${id}`, {method: 'POST'})
+        .then(r => r.json())
+        .then(data => {
+            const card = button.closest('.episode-card');
+            const footer = card.querySelector('footer');
+            
+            // Update the entire footer to show "Downloaded" state
+            footer.innerHTML = `
+                <button 
+                    disabled
+                    style="width: 100%; padding: 0.6rem 0.75rem; border-radius: 8px; font-weight: 500; border: 1.5px solid #3b82f6; background: rgba(59, 130, 246, 0.1); color: #3b82f6; cursor: not-allowed; opacity: 0.8; font-size: 0.85rem;">
+                    ✓ Downloaded
+                </button>
+            `;
+            
+            // Update card status
+            card.setAttribute('data-status', 'downloaded');
+            
+            // Update header indicator
+            const header = card.querySelector('header');
+            const statusSpan = header.querySelector('span:last-child');
+            if (statusSpan) {
+                statusSpan.textContent = '✓';
+                statusSpan.style.color = '#3b82f6';
+            }
+        })
+        .catch(err => {
+            console.error('Error marking as downloaded:', err);
+            alert('Error marking as downloaded. Check console for details.');
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        });
+}
+
+function markAllEpisodesDownloaded(seriesId) {
+    if (!confirm('Mark ALL episodes in this series as downloaded? This will prevent them from being queued.')) return;
+    
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Marking...';
+    
+    fetch(`/queue/mark_all_episodes_downloaded/${seriesId}`, {method: 'POST'})
+        .then(r => r.json())
+        .then(data => {
+            alert(`Marked ${data.count} episodes as downloaded!`);
+            window.location.reload();
+        })
+        .catch(err => {
+            console.error('Error marking all:', err);
+            alert('Error marking episodes. Check console for details.');
+            btn.disabled = false;
+            btn.textContent = originalText;
+        });
+}
+
+// Make functions available globally
+window.markAsDownloaded = markAsDownloaded;
+window.markAllEpisodesDownloaded = markAllEpisodesDownloaded;
+</script>

@@ -41,6 +41,22 @@
                 onmouseout="this.style.borderColor='#334155'; this.style.color='#f1f5f9';">
                 🔄 Refresh
             </button>
+            <button 
+                onclick="scanFiles()"
+                style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 500; background: transparent; color: #f1f5f9; border: 1.5px solid #334155; cursor: pointer; transition: all 0.2s ease;"
+                onmouseover="this.style.borderColor='#3b82f6'; this.style.color='#3b82f6';"
+                onmouseout="this.style.borderColor='#334155'; this.style.color='#f1f5f9';"
+                title="Scan download folder and auto-match files">
+                🔍 Scan Files
+            </button>
+            <button 
+                onclick="showDbInfo()"
+                style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 500; background: transparent; color: #f1f5f9; border: 1.5px solid #334155; cursor: pointer; transition: all 0.2s ease;"
+                onmouseover="this.style.borderColor='#10b981'; this.style.color='#10b981';"
+                onmouseout="this.style.borderColor='#334155'; this.style.color='#f1f5f9';"
+                title="Show database file location">
+                📄 DB Info
+            </button>
         </div>
     </div>
 
@@ -250,4 +266,91 @@ function checkPauseStatus() {
 // Check status every 2 seconds
 setInterval(checkPauseStatus, 2000);
 checkPauseStatus();
+
+function scanFiles() {
+    if (!confirm('Scan download folder and try to match existing files with items? This may take a while.')) return;
+    
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Scanning...';
+    
+    fetch('/queue/scan_files', {method: 'POST'})
+        .then(r => r.json())
+        .then(data => {
+            alert(`Scan complete!\n\nFiles found: ${data.files_found}\nMatched: ${data.matched}\n\n${data.message}`);
+            window.location.reload();
+        })
+        .catch(err => {
+            console.error('Error scanning:', err);
+            alert('Error scanning files. Check console for details.');
+            btn.disabled = false;
+            btn.textContent = originalText;
+        });
+}
+
+function showDbInfo() {
+    fetch('/queue/db_info')
+        .then(r => r.json())
+        .then(data => {
+            const info = `Database Information:\n\n` +
+                        `File Location: ${data.db_file}\n` +
+                        `File Exists: ${data.db_exists ? 'Yes' : 'No'}\n` +
+                        `File Size: ${data.db_size_kb} KB\n` +
+                        `Items Tracked: ${data.item_count}\n` +
+                        `Download Path: ${data.download_path}\n` +
+                        `Download Path Exists: ${data.download_path_exists ? 'Yes' : 'No'}`;
+            alert(info);
+        })
+        .catch(err => {
+            console.error('Error getting DB info:', err);
+            alert('Error getting database info. Check console for details.');
+        });
+}
+</script>
+
+<script>
+// Function to mark items as downloaded (used in streams/episodes pages)
+// This is a fallback - episodes page has its own version
+function markAsDownloaded(kind, id, button, itemId) {
+    if (!confirm('Mark this item as downloaded? This will prevent it from being queued again.')) return;
+    
+    const originalHTML = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '⏳';
+    
+    fetch(`/queue/mark_downloaded/${kind}/${id}`, {method: 'POST'})
+        .then(r => r.json())
+        .then(data => {
+            // Update button without redirect
+            const card = button.closest('article');
+            if (card) {
+                const footer = card.querySelector('footer');
+                if (footer) {
+                    footer.innerHTML = `
+                        <button 
+                            disabled
+                            style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 500; border: 1.5px solid #3b82f6; background: rgba(59, 130, 246, 0.1); color: #3b82f6; cursor: not-allowed; opacity: 0.8;">
+                            ✓ Already Downloaded
+                        </button>
+                    `;
+                }
+            } else {
+                // Fallback for non-card layouts
+                button.style.borderColor = '#3b82f6';
+                button.style.color = '#3b82f6';
+                button.style.background = 'rgba(59, 130, 246, 0.1)';
+                button.innerHTML = '✓';
+            }
+        })
+        .catch(err => {
+            console.error('Error marking as downloaded:', err);
+            alert('Error marking as downloaded. Check console for details.');
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        });
+}
+
+// Make function available globally
+window.markAsDownloaded = markAsDownloaded;
 </script>
